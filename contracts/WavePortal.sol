@@ -8,8 +8,9 @@ import "hardhat/console.sol";
 
 contract WavePortal {
   address owner;
-  address[] senders;
+  address[] prizeWinners;
   uint256 totalWaves;
+  uint256 private seed;
 
   event NewWave(address indexed from, uint256 timestamp, string message);
 
@@ -21,32 +22,50 @@ contract WavePortal {
 
   Wave[] waves;
 
+  // store the address with the last time the user waved at us
+  mapping(address => uint256) public lastWavedAt;
+
   constructor() payable {
     owner = msg.sender;
     console.log("Hi, I am a smart contract. I am a program deployed to the blockchain by %s.", owner);
   }
 
   function wave(string memory _message) public {
+    require(
+      lastWavedAt[msg.sender] + 15 minutes < block.timestamp,
+      "Wait 15m"
+    );
+
+    lastWavedAt[msg.sender] = block.timestamp;
+
     totalWaves += 1;
+    uint256 randomNumber = (block.difficulty + block.timestamp + seed) % 100;
+    console.log("Random # generated: %s", randomNumber);
+    seed = randomNumber;
+
     if (owner == msg.sender) {
       console.log("itsPanicky has waved!");
-    } else if (senderAlreadyWaved(msg.sender)) {
-      console.log("%s has waved again!", msg.sender);
+    } else if (senderAlreadyWonPrize(msg.sender)) {
+      console.log("%s has won the prize already!", msg.sender);
     } else {
-      addSender(msg.sender);
       console.log("%s has waved!", msg.sender);
+
+      if (randomNumber < 50) {
+        console.log("%s won!", msg.sender);
+
+        uint256 prizeAmount = 0.0001 ether;
+        require(
+            prizeAmount <= address(this).balance,
+            "Trying to withdraw more money than the contract has."
+        );
+        (bool success, ) = (msg.sender).call{value: prizeAmount}("");
+        require(success, "Failed to withdraw money from contract.");
+        addWinner(msg.sender);
+      }
     }
 
     waves.push(Wave(msg.sender, _message, block.timestamp));
     emit NewWave(msg.sender, block.timestamp, _message);
-
-    uint256 prizeAmount = 0.0001 ether;
-    require(
-      prizeAmount <= address(this).balance,
-      "Trying to withdraw more money"
-    );
-    (bool success, ) = (msg.sender).call{ value: prizeAmount }("");
-    require(success, "Failed to withdraw money from contract." );
   }
 
   function getAllWaves() public view returns (Wave[] memory){
@@ -58,17 +77,17 @@ contract WavePortal {
     return totalWaves;
   }
 
-  function senderAlreadyWaved(address _sender) private view returns (bool) {
-    for (uint i = 0; i < senders.length; i++) {
-      if (senders[i] == _sender) {
+  function senderAlreadyWonPrize(address _sender) private view returns (bool) {
+    for (uint i = 0; i < prizeWinners.length; i++) {
+      if (prizeWinners[i] == _sender) {
         return true;
       }
     }
     return false;
   }
 
-  function addSender(address _sender) private {
-    senders.push(_sender);
+  function addWinner(address _sender) private {
+    prizeWinners.push(_sender);
   }
 }
 
