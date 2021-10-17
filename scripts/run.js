@@ -1,34 +1,46 @@
 const main = async () => {
   // In order to deploy something to the blockchain, we need:
   // 1. wallet address
-  // 2. ???
+
   const [owner, randomPerson] = await hre.ethers.getSigners()
   const waveContractFactory = await hre.ethers.getContractFactory('WavePortal')
-  const waveContract = await waveContractFactory.deploy()
+  const waveContract = await waveContractFactory.deploy({ 
+    value: hre.ethers.utils.parseEther('0.1'),
+  })
   await waveContract.deployed()
 
-  console.log('Contract deployed to:', waveContract.address)
-  console.log('Contract deployed by:', owner.address)
+  console.log('Contract addy:', waveContract.address)
+
+  let contractBalance = await hre.ethers.provider.getBalance(waveContract.address);
+  console.log('Contract Balance', hre.ethers.utils.formatEther(contractBalance));
 
   let waveCount
   let waveTxn
 
   waveCount = await waveContract.getTotalWaves()
 
-  waveTxn = await waveContract.wave()
+  waveTxn = await waveContract.wave('A message!')
+  await waveTxn.wait()
+  contractBalance = await hre.ethers.provider.getBalance(waveContract.address);
+  console.log(
+    'Contract balance:',
+    hre.ethers.utils.formatEther(contractBalance)
+  );
+
+  waveCount = await waveContract.getTotalWaves()
+
+  waveTxn = await waveContract.connect(randomPerson).wave('Another message!')
   await waveTxn.wait()
 
   waveCount = await waveContract.getTotalWaves()
 
-  waveTxn = await waveContract.connect(randomPerson).wave()
+  waveTxn = await waveContract.connect(randomPerson).wave('A third message!')
   await waveTxn.wait()
 
   waveCount = await waveContract.getTotalWaves()
 
-  waveTxn = await waveContract.connect(randomPerson).wave()
-  await waveTxn.wait()
-
-  waveCount = await waveContract.getTotalWaves()
+  let allWaves = await waveContract.getAllWaves()
+  console.log(allWaves)
 }
 
 const runMain = async () => {

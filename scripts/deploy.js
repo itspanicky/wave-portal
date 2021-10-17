@@ -5,11 +5,14 @@ const main = async () => {
   console.log('Deploying contracts with account: ', deployer.address)
   console.log('Account balance: ', accountBalance.toString())
 
-  const Token = await hre.ethers.getContractFactory('WavePortal')
-  const portal = await Token.deploy()
-  await portal.deployed()
+  const waveContractFactory = await hre.ethers.getContractFactory('WavePortal')
+  const waveContract = await waveContractFactory.deploy({
+    value: hre.ethers.utils.parseEther('0.001'),
+  })
+  await waveContract.deployed()
 
-  console.log('WavePortal address: ', portal.address)
+  // contract address is needed to connect frontend to our wavePortal contract
+  console.log('WavePortal address: ', waveContract.address)
 }
 
 const runMain = async () => {
@@ -28,4 +31,8 @@ runMain()
 // deploys an empty blockchain with 20 dummy accounts (each with 10000 ETH)
 
 // npx hardhat run scripts/deploy.js --network localhost
-// deploys contract to the blockchain from ^^
+// deploys contract to the blockchain on localhost
+
+// npx hardhat run scripts/deploy.js --network rinkeby
+// deploys contract to the blockchain on rinkeby
+// verify on rinkeby.etherscan.io
