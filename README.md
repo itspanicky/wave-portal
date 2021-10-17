@@ -13,3 +13,11 @@ npx hardhat node
 node scripts/sample-script.js
 npx hardhat help
 ```
+
+## Deployment to Client - https://waveportal-starter-project.itspanicky.repl.co/
+
+Steps 1-3 must be done whenever we change our contract.
+
+1. Deploy `npx hardhat run scripts/deploy.js --network rinkeby`
+2. Update contract address on our frontend
+3. Update ABI file on our frontend
