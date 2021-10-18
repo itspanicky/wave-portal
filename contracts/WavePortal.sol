@@ -12,12 +12,13 @@ contract WavePortal {
   uint256 totalWaves;
   uint256 private seed;
 
-  event NewWave(address indexed from, uint256 timestamp, string message);
+  event NewWave(address indexed from, uint256 timestamp, string message, bool prizeWon);
 
   struct Wave {
     address waver;
-    string message;
     uint256 timestamp;
+    string message;
+    bool prizeWon;
   }
 
   Wave[] waves;
@@ -39,6 +40,7 @@ contract WavePortal {
     lastWavedAt[msg.sender] = block.timestamp;
 
     totalWaves += 1;
+    bool prizeWon = false;
     uint256 randomNumber = (block.difficulty + block.timestamp + seed) % 100;
     console.log("Random # generated: %s", randomNumber);
     seed = randomNumber;
@@ -61,11 +63,12 @@ contract WavePortal {
         (bool success, ) = (msg.sender).call{value: prizeAmount}("");
         require(success, "Failed to withdraw money from contract.");
         addWinner(msg.sender);
+        prizeWon = true;
       }
     }
 
-    waves.push(Wave(msg.sender, _message, block.timestamp));
-    emit NewWave(msg.sender, block.timestamp, _message);
+    waves.push(Wave(msg.sender, block.timestamp, _message, prizeWon));
+    emit NewWave(msg.sender, block.timestamp, _message, prizeWon);
   }
 
   function getAllWaves() public view returns (Wave[] memory){
